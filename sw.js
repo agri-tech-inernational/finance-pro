@@ -1,22 +1,32 @@
-// Basic Service Worker for AgriTech Factory App
-const CACHE_NAME = 'agritech-factory-v1';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './favicon.svg'
-];
+// Self-Healing Service Worker for AgriTech PRO
+const CACHE_NAME = 'agritech-pro-cache-v2';
 
+// ── INSTALL ──
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then((cache) => {
+      // Don't cache index.html here anymore to ensure freshness
+      return cache.addAll(['./manifest.json', './favicon.svg']);
+    })
   );
 });
 
+// ── ACTIVATE ──
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// ── FETCH (Network-First Strategy) ──
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });

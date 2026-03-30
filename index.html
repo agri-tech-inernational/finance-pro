@@ -19,6 +19,39 @@
     <meta http-equiv="Expires" content="0" />
     
     <title>AgriTech PRO v1.0.1</title>
+    
+    <!-- Nuclear Reset: Failsafe to clear deep browser cache/service workers -->
+    <script>
+      (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('nuke') === 'true') {
+          console.warn('NUCLEAR RESET TRIGGERED. PURGING ALL CACHES...');
+          
+          // 1. Unregister Service Workers
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              for(let registration of registrations) { registration.unregister(); }
+            });
+          }
+          
+          // 2. Clear Cache Storage
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              for (let name of names) caches.delete(name);
+            });
+          }
+          
+          // 3. Clear Local & Session Storage
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // 4. Force Reload to a clean URL
+          setTimeout(() => {
+            window.location.href = window.location.pathname + '?v=' + Date.now();
+          }, 500);
+        }
+      })();
+    </script>
 
     <!-- Self-Healing Loader: Detects Asset 404s and forces a hard refresh -->
     <script>
